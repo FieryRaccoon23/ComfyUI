@@ -1,5 +1,4 @@
 import requests
-import json
 from pathlib import Path
 from . import ollama_config
 
@@ -27,11 +26,8 @@ def ensure_models(models: list[str]) -> None:
         ensure_model(m)
 
 def pull_models() -> tuple[str, str]:
-    here = Path(__file__).resolve().parent
-    json_path = here / "ollama_models.json"
-    config = json.loads(Path(json_path).read_text())
-    chat_model = config["chat_model"]
-    embed_model = config["embed_model"]
+    chat_model = ollama_config.chat_model
+    embed_model = ollama_config.embed_model
     ensure_models([chat_model, embed_model])
 
     return chat_model, embed_model
