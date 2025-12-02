@@ -158,7 +158,7 @@ if __name__ == "__main__":
     # super simple CLI usage:
     #   python -m your_package.ollama_node_index_from_object_info "edge detection node"
     import sys
-    q = " ".join(sys.argv[1:]).strip() or "text annotate node"
+    q = " ".join(sys.argv[1:]).strip() or "text workflow node"
     query_node_index(q, top_k=10)
     # nodes, _, _, _ = _load_node_index()
     # hits = [n for n in nodes if "edge" in n.lower() or "canny" in n.lower() or "sobel" in n.lower()]

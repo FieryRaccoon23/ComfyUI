@@ -81,7 +81,7 @@ def fetch_object_info_with_retry(url: str, *, attempts: int = 30, delay: float =
         except Exception as e:
             last_err = e
         time.sleep(delay)
-    print(f"[LLM] object_info not ready: {url} ({last_err})")
+    print(f"[Embeddings] object_info not ready: {url} ({last_err})")
     return None
 
 def compact_node_text(node_class: str, meta: dict) -> str:
@@ -99,9 +99,9 @@ def compact_node_text(node_class: str, meta: dict) -> str:
     parts = []
     
     if desc:
-        parts.append(f"description: {desc}")
+        parts.append(f"{desc}")
     if out_tips_line:
-        parts.append(f"output_tooltips: {out_tips_line}")
+        parts.append(f"{out_tips_line}")
 
     text = "\n".join(parts).strip()
     return text
@@ -119,6 +119,7 @@ def ensure_index_from_object_info() -> None:
     vecs_path = cache_dir / "node_index.vectors.npy"
     weights_path = cache_dir / "node_index.weights.npy"
     node_weights_path = cache_dir / "node_index.weights.json"
+    node_final_texts_path = cache_dir / "node_index.final_texts.json"
 
     if custom_path.exists():
         custom_notes = json.loads(custom_path.read_text(encoding="utf-8"))
@@ -161,13 +162,14 @@ def ensure_index_from_object_info() -> None:
     if object_info is None:
         return
 
-    # Build stable list of nodes
-    node_names = sorted(object_info.keys())
+    # Build stable list of nodes (merge list from app and from web)
+    node_names = sorted(set(object_info.keys()) | set(web_crawler_notes.keys()))
 
     final_hashes: Dict[str, str] = {}
     new_vecs: List[np.ndarray] = []
     new_weights: List[np.float32] = []
     node_weights: dict[str, float] = {}
+    final_text_dict: dict[str, float] = {}
     reused = updated = 0
 
     for n in node_names:
@@ -178,9 +180,9 @@ def ensure_index_from_object_info() -> None:
 
         final_text = base_text
         if user_text:
-            final_text += "\ncustom_notes: " + user_text
+            final_text += user_text
         if web_crawler_text:
-            final_text += "\nwebcrawler_info: " + web_crawler_text
+            final_text += web_crawler_text
 
         # If no description, keep the weight lower
         decrease_weight = False
@@ -192,10 +194,8 @@ def ensure_index_from_object_info() -> None:
         new_weights.append(w)
         node_weights[str(n)] = float(w)
 
-        # base_hash = _sha256(base_text)
-        # user_hash = _sha256(user_text) if user_text else "0"
-        # web_crawler_hash = _sha256(web_crawler_text) if web_crawler_text else "0"
-        # final_hash = _sha256(base_hash + "|" + web_crawler_hash + "|" + user_hash)
+        final_text_dict[str(n)] = str(final_text)
+
         final_hash = _sha256(final_text)
         final_hashes[n] = final_hash
 
@@ -208,26 +208,26 @@ def ensure_index_from_object_info() -> None:
             updated += 1
 
     if updated == 0:
-        print("[LLM] Index already up to date; skipping write.")
+        print("[Embeddings] Index already up to date; skipping write.")
         return
     else:
-        print("[LLM] Will be building index.")
+        print("[Embeddings] Will be building index.")
 
     vec_arr = np.stack(new_vecs, axis=0) if new_vecs else np.zeros((0, 0), dtype=np.float32)
     weight_arr = np.asarray(new_weights, dtype=np.float32)
 
     # Sanity check for vectors
     if vec_arr.ndim != 2 or vec_arr.shape[0] != len(node_names) or vec_arr.shape[1] == 0:
-        print(f"[LLM] WARNING: Embedding matrix shape looks wrong: {vec_arr.shape}")
+        print(f"[Embeddings] WARNING: Embedding matrix shape looks wrong: {vec_arr.shape}")
     else:
         bad = int(np.isnan(vec_arr).sum() + np.isinf(vec_arr).sum())
         if bad:
-            print(f"[LLM] WARNING: Embeddings contain NaN/Inf values! bad_count={bad}")
+            print(f"[Embeddings] WARNING: Embeddings contain NaN/Inf values! bad_count={bad}")
         else:
             norms = np.linalg.norm(vec_arr, axis=1)
             zeroish = int((norms < 1e-8).sum())
             print(
-                f"[LLM] Embeddings sanity OK. min_norm={norms.min():.4f} "
+                f"[Embeddings] Embeddings sanity OK. min_norm={norms.min():.4f} "
                 f"max_norm={norms.max():.4f} zeroish={zeroish}"
             )
 
@@ -237,6 +237,7 @@ def ensure_index_from_object_info() -> None:
     # Save index
     _atomic_write_text(nodes_path, json.dumps(node_names, indent=2))
     _atomic_write_text(node_weights_path, json.dumps(node_weights, indent=2, sort_keys=True))
+    _atomic_write_text(node_final_texts_path, json.dumps(final_text_dict, indent=2, sort_keys=True))
     _atomic_write_npy(vecs_path, vec_arr)
     _atomic_write_npy(weights_path, weight_arr)
     _atomic_write_text(meta_path, json.dumps({
@@ -250,7 +251,7 @@ def ensure_index_from_object_info() -> None:
     }, indent=2))
 
     print(
-    f"[LLM] Node index build complete. nodes={len(node_names)} "
+    f"[Embeddings] Node index build complete. nodes={len(node_names)} "
     f"updated={updated} reused={reused} dim={int(vec_arr.shape[1]) if vec_arr.ndim==2 else 0} "
     f"cache_dir={cache_dir}")
-    print(f"[LLM] Wrote: {gen_snapshot.name}, {nodes_path.name}, {meta_path.name}, {vecs_path.name}")
+    print(f"[Embeddings] Wrote: {gen_snapshot.name}, {nodes_path.name}, {meta_path.name}, {vecs_path.name}")
