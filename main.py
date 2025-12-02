@@ -19,6 +19,8 @@ from comfy_execution.utils import get_executing_context
 
 from agent.ollama_bootstrap import OllamaConfig, ensure_ollama
 from agent.ollama_model import pull_models
+from agent.ollama_node_index_from_object_info import ensure_index_from_object_info
+from agent import agent_runtime_info
 from agent.ollama_chat import test_chat
 
 if __name__ == "__main__":
@@ -293,12 +295,12 @@ def prompt_worker(q, server_instance):
                 hook_breaker_ac10a0.restore_functions()
 
 
-async def run(server_instance, address="", port=8188, verbose=True, call_on_start=None):
+async def run(server_instance, address="", port=8188, verbose=True, call_on_start=None, call_on_post_start = None):
     addresses = []
     for addr in address.split(","):
         addresses.append((addr, port))
     await asyncio.gather(
-        server_instance.start_multi_address(addresses, call_on_start, verbose),
+        server_instance.start_multi_address(addresses, call_on_start, call_on_post_start, verbose),
         server_instance.publish_loop(),
     )
 
@@ -425,6 +427,13 @@ def start_comfyui(asyncio_loop=None):
 
         call_on_start = startup_server
 
+    call_on_post_start = None
+    if agent_runtime_info.is_ollama_enabled:
+        def post_startup_server():
+            threading.Thread(target=ensure_index_from_object_info, daemon=True).start()
+
+        call_on_post_start = post_startup_server
+
     async def start_all():
         await prompt_server.setup()
         await run(
@@ -433,7 +442,9 @@ def start_comfyui(asyncio_loop=None):
             port=args.port,
             verbose=not args.dont_print_server,
             call_on_start=call_on_start,
+            call_on_post_start=call_on_post_start
         )
+
 
     # Returning these so that other code can integrate with the ComfyUI loop and server
     return asyncio_loop, prompt_server, start_all
@@ -450,11 +461,12 @@ if __name__ == "__main__":
         )
 
     # Check for Ollama
-    enable_ollama = ensure_ollama(OllamaConfig(args.ollama))
-    if enable_ollama:
+    agent_runtime_info.comfy_ui_host = f"http://{args.listen}:{int(args.port)}"
+    agent_runtime_info.is_ollama_enabled = ensure_ollama(OllamaConfig(mode = args.ollama))
+    if agent_runtime_info.is_ollama_enabled:
         chat_model, embed_model = pull_models()
         logging.info(f"Ollama enabled. chat={chat_model} embed={embed_model}")
-        test_chat()
+        #test_chat()
     else:
         logging.info("Ollama disabled/unavailable; LLM features will be off.")
 

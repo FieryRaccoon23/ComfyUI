@@ -1026,10 +1026,12 @@ class PromptServer():
             msg = await self.messages.get()
             await self.send(*msg)
 
-    async def start(self, address, port, verbose=True, call_on_start=None):
-        await self.start_multi_address([(address, port)], call_on_start=call_on_start)
+    async def start(self, address, port, verbose=True, call_on_start=None, call_on_post_start = None):
+        await self.start_multi_address([(address, port)], call_on_start=call_on_start, call_on_post_start=call_on_post_start)
 
-    async def start_multi_address(self, addresses, call_on_start=None, verbose=True):
+        # Create db using object_info
+
+    async def start_multi_address(self, addresses, call_on_start=None, call_on_post_start = None, verbose=True):
         runner = web.AppRunner(self.app, access_log=None)
         await runner.setup()
         ssl_ctx = None
@@ -1062,6 +1064,9 @@ class PromptServer():
 
         if call_on_start is not None:
             call_on_start(scheme, self.address, self.port)
+
+        if call_on_post_start is not None:
+            call_on_post_start()
 
     def add_on_prompt_handler(self, handler):
         self.on_prompt_handlers.append(handler)

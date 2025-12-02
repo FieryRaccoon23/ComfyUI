@@ -14,7 +14,7 @@ from . import ollama_config
 @dataclass(frozen=True)
 class OllamaConfig:
     mode: str = "off"  # "off" | "auto" | "require"
-    host: str = ollama_config.OLLAMA_HOST
+    host: str = ollama_config.ollama_host
     quiet: bool = True  # suppress serve logs if we spawn it
 
 

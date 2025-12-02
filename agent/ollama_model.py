@@ -3,7 +3,7 @@ from pathlib import Path
 from . import ollama_config
 
 def list_models() -> set[str]:
-    r = requests.get(f"{ollama_config.OLLAMA_HOST}/api/tags", timeout=10)
+    r = requests.get(f"{ollama_config.ollama_host}/api/tags", timeout=10)
     r.raise_for_status()
     data = r.json()
     return {m["name"] for m in data.get("models", [])}
@@ -15,7 +15,7 @@ def ensure_model(model: str) -> None:
         return
 
     r = requests.post(
-        f"{ollama_config.OLLAMA_HOST}/api/pull",
+        f"{ollama_config.ollama_host}/api/pull",
         json={"model": model, "stream": False},
         timeout=60 * 60,
     )
