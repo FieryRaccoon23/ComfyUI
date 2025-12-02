@@ -24,6 +24,7 @@ def _load_node_index(cache_dir: Path | None = None) -> tuple[list[str], np.ndarr
     nodes_path = cache_dir / "node_index.nodes.json"
     vecs_path = cache_dir / "node_index.vectors.npy"
     snapshot_path = cache_dir / "object_info.generated.json"
+    weights_path = cache_dir / "node_index.weights.npy"
 
     if not nodes_path.exists() or not vecs_path.exists():
         raise FileNotFoundError(f"Missing index files in {cache_dir}. Run ensure_index_from_object_info() first.")
@@ -31,14 +32,20 @@ def _load_node_index(cache_dir: Path | None = None) -> tuple[list[str], np.ndarr
     nodes: list[str] = json.loads(nodes_path.read_text(encoding="utf-8"))
     vecs: np.ndarray = np.load(vecs_path)  # (N, D)
 
+    weights = np.ones((len(nodes),), dtype=np.float32)
+    if weights_path.exists():
+        weights = np.load(weights_path).astype(np.float32, copy=False)
+
     snapshot = {}
     if snapshot_path.exists():
         snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
 
     if vecs.ndim != 2 or len(nodes) != vecs.shape[0]:
         raise RuntimeError(f"Index shape mismatch: nodes={len(nodes)} vecs={vecs.shape}")
+    if weights.shape != (len(nodes),):
+        raise RuntimeError(f"Weights shape mismatch: nodes={len(nodes)} weights={weights.shape}")
 
-    return nodes, vecs.astype(np.float32, copy=False), snapshot
+    return nodes, vecs.astype(np.float32, copy=False), snapshot, weights
 
 
 def _topk_cosine(vecs: np.ndarray, q_vec: np.ndarray, top_k: int):
@@ -90,7 +97,7 @@ def _topk_cosine(vecs: np.ndarray, q_vec: np.ndarray, top_k: int):
 
 
 def query_node_index(query: str, *, top_k: int = 10) -> list[tuple[str, float]]:
-    nodes, vecs, snapshot = _load_node_index()
+    nodes, vecs, snapshot, weights = _load_node_index()
 
     # Log Stats for Vectors
     log_text = (
@@ -117,6 +124,11 @@ def query_node_index(query: str, *, top_k: int = 10) -> list[tuple[str, float]]:
 
     # Run Search
     idx, sims = _topk_cosine(vecs, q_vec, top_k)
+
+    penalized = sims * weights[idx]
+    order = np.argsort(-penalized)
+    idx = idx[order]
+    sims = penalized[order]
 
     results: list[tuple[str, float]] = []
     for rank, (i, s) in enumerate(zip(idx.tolist(), sims.tolist()), start=1):
@@ -146,8 +158,8 @@ if __name__ == "__main__":
     # super simple CLI usage:
     #   python -m your_package.ollama_node_index_from_object_info "edge detection node"
     import sys
-    q = " ".join(sys.argv[1:]).strip() or "edge detection node"
+    q = " ".join(sys.argv[1:]).strip() or "text annotate node"
     query_node_index(q, top_k=10)
-    nodes, _, _ = _load_node_index()
-    hits = [n for n in nodes if "edge" in n.lower() or "canny" in n.lower() or "sobel" in n.lower()]
-    print("edge-like nodes:", hits[:50])
+    # nodes, _, _, _ = _load_node_index()
+    # hits = [n for n in nodes if "edge" in n.lower() or "canny" in n.lower() or "sobel" in n.lower()]
+    # print("edge-like nodes:", hits[:50])

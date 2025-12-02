@@ -19,7 +19,7 @@ from comfy_execution.utils import get_executing_context
 
 from agent.ollama_bootstrap import OllamaConfig, ensure_ollama
 from agent.ollama_model import pull_models
-from agent.ollama_node_index_from_object_info import ensure_index_from_object_info
+from agent.generate_vector_embeddings import ensure_index_from_object_info
 from agent import agent_runtime_info
 from agent.ollama_chat import test_chat
 
