@@ -4,6 +4,7 @@ import asyncio, json, re
 from pathlib import Path
 from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig, CacheMode
 from datetime import datetime
+from typing import Any
 
 FULL_SCRAPE = False
 
@@ -13,6 +14,48 @@ JSON_FILE_NAME = "node_webcrawler_info.json"
 
 INDEX_URL = "https://comfyui-wiki.com/en/comfyui-nodes"
 PREFIX = "https://comfyui-wiki.com/en/comfyui-nodes"
+
+def slug_to_pascal(s: str) -> str:
+    if not s:
+        return ""
+    parts = re.split(r"[-_\s]+", s.strip())
+    parts = [p for p in parts if p]
+    return "".join(p[:1].upper() + p[1:] for p in parts)
+
+def _convert_keys(obj: Any, recursive: bool) -> Any:
+    if isinstance(obj, dict):
+        out = {}
+        for k, v in obj.items():
+            nk = slug_to_pascal(k) if isinstance(k, str) else k
+            if nk in out:
+                raise ValueError(f"Key collision after conversion: {k!r} -> {nk!r}")
+            out[nk] = _convert_keys(v, recursive) if recursive else v
+        return out
+    if recursive and isinstance(obj, list):
+        return [_convert_keys(x, recursive) for x in obj]
+    return obj
+
+def convert_json_keys_to_pascal(input_path: str | Path, *, recursive: bool = False) -> list[Path]:
+    input_path = Path(input_path)
+    outputs: list[Path] = []
+
+    def _convert_file(p: Path) -> Path:
+        data = json.loads(p.read_text(encoding="utf-8"))
+        converted = _convert_keys(data, recursive=recursive)
+        out = p.with_name(p.stem + ".pascal.json")
+        out.write_text(json.dumps(converted, ensure_ascii=False, indent=2), encoding="utf-8")
+        return out
+
+    if input_path.is_dir():
+        for p in sorted(input_path.glob("*.json")):
+            # skip outputs to avoid infinite re-processing
+            if p.name.endswith(".pascal.json"):
+                continue
+            outputs.append(_convert_file(p))
+    else:
+        outputs.append(_convert_file(input_path))
+
+    return outputs
 
 def safe_folder_name(url: str) -> str:
     slug = url.rstrip("/").split("/")[-1] or "root"
@@ -225,6 +268,9 @@ if __name__ == "__main__":
         asyncio.run(crawl_web())
     else:
         create_json_from_last_scrapping()
+
+    # TODO: This is bad but for now it is fine since it is only run when doc update
+    convert_json_keys_to_pascal(Path(__file__).resolve().parent / CRAWLER_DATA_DIR, recursive=False)
 
     # move to node_cache
     web_root   = Path(__file__).resolve().parent / CRAWLER_DATA_DIR   # web_crawler

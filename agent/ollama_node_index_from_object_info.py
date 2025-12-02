@@ -11,8 +11,7 @@ import requests
 
 from . import agent_runtime_info
 from . import ollama_config
-
-
+from . import ollama_embedding_util
 
 def _sha256(s: str) -> str:
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
@@ -71,17 +70,6 @@ def _node_base_text(node_class: str, meta: Dict[str, Any]) -> str:
         f"description: {desc}".strip(),
     ]).strip()
 
-
-def _embed(host: str, embed_model: str, text: str) -> List[float]:
-    r = requests.post(
-        f"{host.rstrip('/')}/api/embeddings",
-        json={"model": embed_model, "prompt": text},
-        timeout=120,
-    )
-    if not r.ok:
-        raise RuntimeError(f"Ollama embeddings failed ({r.status_code}): {r.text[:1000]}")
-    return r.json()["embedding"]
-
 def fetch_object_info_with_retry(url: str, *, attempts: int = 30, delay: float = 0.5, timeout: float = 10.0) -> dict | None:
     last_err = None
     for _ in range(attempts):
@@ -136,6 +124,7 @@ def ensure_index_from_object_info() -> None:
 
     gen_snapshot = cache_dir / "object_info.generated.json"
     custom_path = cache_dir / "node_custom_notes.json"
+    web_crawler_path = cache_dir / "node_webcrawler_info.json"
     nodes_path = cache_dir / "node_index.nodes.json"
     meta_path = cache_dir / "node_index.meta.json"
     vecs_path = cache_dir / "node_index.vectors.npy"
@@ -144,6 +133,11 @@ def ensure_index_from_object_info() -> None:
         custom_notes = json.loads(custom_path.read_text(encoding="utf-8"))
     else:
         custom_notes = {}
+
+    if web_crawler_path.exists():
+        web_crawler_notes = json.loads(web_crawler_path.read_text(encoding="utf-8"))
+    else:
+        web_crawler_notes = {}
 
     # Load old index if present
     old_meta = {}
@@ -188,27 +182,33 @@ def ensure_index_from_object_info() -> None:
         # base_text = _node_base_text(n, meta)
         base_text = compact_node_text(n, meta)
         user_text = (custom_notes.get(n) or "").strip()
+        web_crawler_text = (web_crawler_notes.get(n) or "").strip()
 
         base_hash = _sha256(base_text)
         user_hash = _sha256(user_text) if user_text else "0"
-        final_hash = _sha256(base_hash + "|" + user_hash)
+        web_crawler_hash = _sha256(web_crawler_text) if web_crawler_text else "0"
+        final_hash = _sha256(base_hash + "|" + web_crawler_hash + "|" + user_hash)
         final_hashes[n] = final_hash
 
         final_text = base_text
         if user_text:
             final_text += "\ncustom_notes: " + user_text
+        if web_crawler_text:
+            final_text += "\nwebcrawler_info: " + web_crawler_text
 
         if reuse_allowed and old_hashes.get(n) == final_hash and n in old_vec_map:
             new_vecs.append(old_vec_map[n])
             reused += 1
         else:
-            v = np.array(_embed(ollama_host, embed_model, final_text), dtype=np.float32)
+            v = np.array(ollama_embedding_util._embed(ollama_host, embed_model, final_text), dtype=np.float32)
             new_vecs.append(v)
             updated += 1
 
     if updated == 0:
         print("[LLM] Index already up to date; skipping write.")
         return
+    else:
+        print("[LLM] Will be building index.")
 
     vec_arr = np.stack(new_vecs, axis=0) if new_vecs else np.zeros((0, 0), dtype=np.float32)
 
