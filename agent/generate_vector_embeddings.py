@@ -29,47 +29,6 @@ def _atomic_write_npy(path: Path, arr: np.ndarray) -> None:
     saved = tmp if tmp.suffix == ".npy" else Path(str(tmp) + ".npy")
     saved.replace(path)
 
-
-# def _extract_type(t: Any) -> str:
-#     if isinstance(t, str):
-#         return t
-#     if isinstance(t, (list, tuple)) and t and isinstance(t[0], str):
-#         return t[0]
-#     return "UNKNOWN"
-
-
-# def _node_base_text(node_class: str, meta: Dict[str, Any]) -> str:
-#     inp = meta.get("input", {}) or {}
-#     req = (inp.get("required") or {})
-#     opt = (inp.get("optional") or {})
-#     hid = (inp.get("hidden") or {})
-
-#     def fmt_inputs(d: Dict[str, Any]) -> str:
-#         parts = []
-#         for k in sorted(d.keys()):
-#             parts.append(f"{k}:{_extract_type(d[k])}")
-#         return ", ".join(parts)
-
-#     outputs = meta.get("output") or meta.get("return_types") or meta.get("outputs") or []
-#     if isinstance(outputs, str):
-#         outputs = [outputs]
-
-#     display = meta.get("display_name") or meta.get("name") or ""
-#     category = meta.get("category") or ""
-#     desc = meta.get("description") or meta.get("tooltip") or ""
-
-#     # Keep stable + compact (avoid huge dumps)
-#     return "\n".join([
-#         f"class: {node_class}",
-#         f"display: {display}",
-#         f"category: {category}",
-#         f"required: {fmt_inputs(req)}",
-#         f"optional: {fmt_inputs(opt)}",
-#         f"hidden: {fmt_inputs(hid)}",
-#         f"outputs: {', '.join(map(str, outputs))}",
-#         f"description: {desc}".strip(),
-#     ]).strip()
-
 def fetch_object_info_with_retry(url: str, *, attempts: int = 30, delay: float = 0.5, timeout: float = 10.0) -> dict | None:
     last_err = None
     for _ in range(attempts):
@@ -84,27 +43,99 @@ def fetch_object_info_with_retry(url: str, *, attempts: int = 30, delay: float =
     print(f"[Embeddings] object_info not ready: {url} ({last_err})")
     return None
 
-def compact_node_text(node_class: str, meta: dict) -> str:
-    desc = (meta.get("description") or "").strip()
+def _parse_param_spec(spec):
+    """
+    spec is usually: [TYPE_OR_OPTIONS, CONFIG_DICT?]
+      - TYPE_OR_OPTIONS can be "INT"/"FLOAT"/"STRING"/"COMBO"/etc OR a list of options
+      - CONFIG_DICT can have tooltip/default/min/max/step/options/etc
+    """
+    param_type = None
+    cfg = {}
+    options = None
 
-    output_tooltips = meta.get("output_tooltips") or []
+    if isinstance(spec, list) and spec:
+        first = spec[0]
+        if len(spec) > 1 and isinstance(spec[1], dict):
+            cfg = spec[1]
 
-    # normalize if someone stored strings instead of lists
-    # if isinstance(output_tooltips, str):
-    #     output_tooltips = [output_tooltips]
+        # If first is a list => it's a combo options list
+        if isinstance(first, list):
+            param_type = "COMBO"
+            options = first
+        else:
+            param_type = str(first)
 
-    #out_tips_line = " | ".join(str(x).strip() for x in output_tooltips if str(x).strip())
-    out_tips_line = "\n".join(str(t) for t in output_tooltips if t is not None).strip()
+        # COMBO sometimes stores choices in cfg["options"] instead
+        if param_type == "COMBO" and isinstance(cfg.get("options"), list):
+            options = cfg["options"]
 
+    elif isinstance(spec, str):
+        param_type = spec
+
+    return param_type, cfg, options
+
+
+def _format_param(name, spec):
+    param_type, cfg, options = _parse_param_spec(spec)
+
+    tooltip = (cfg.get("tooltip") or "").strip()
+    default = cfg.get("default", None)
+
+    bits = [f"{name}: {param_type}" if param_type else name]
+    if tooltip:
+        bits.append(tooltip)
+    if default is not None:
+        bits.append(f"default={default}")
+
+    # common numeric constraints
+    for k in ("min", "max", "step", "round"):
+        if k in cfg:
+            bits.append(f"{k}={cfg[k]}")
+
+    if options:
+        # keep it short-ish; you can remove the slice if you want all
+        bits.append("options=" + ", ".join(map(str, options[:50])) + ("..." if len(options) > 50 else ""))
+
+    return " | ".join(bits)
+
+
+def object_info_node_text(node_class: str, meta: dict) -> str:
     parts = []
-    
-    if desc:
-        parts.append(f"{desc}")
-    if out_tips_line:
-        parts.append(f"{out_tips_line}")
 
-    text = "\n".join(parts).strip()
-    return text
+    # high-level node info
+    display_name = (meta.get("display_name") or "").strip()
+    desc = (meta.get("description") or "").strip()
+    if display_name and display_name != node_class:
+        parts.append(display_name)
+    if desc:
+        parts.append(desc)
+
+    # inputs (required/optional/hidden)
+    inputs = meta.get("input") or {}
+    for section in ("required", "optional", "hidden"):
+        params = inputs.get(section) or {}
+        if not isinstance(params, dict) or not params:
+            continue
+        parts.append(f"\n[{section} inputs]")
+        for pname, pspec in params.items():
+            parts.append(_format_param(pname, pspec))
+
+    # outputs
+    out_types = meta.get("output") or []
+    out_names = meta.get("output_name") or []
+    out_tips  = meta.get("output_tooltips") or []
+
+    if out_types:
+        parts.append("\n[outputs]")
+        for i, otype in enumerate(out_types):
+            oname = out_names[i] if i < len(out_names) else None
+            otip  = out_tips[i] if i < len(out_tips) else None
+            line = f"{oname or f'out{i}'}: {otype}"
+            if otip:
+                line += f" | {str(otip).strip()}"
+            parts.append(line)
+
+    return "\n".join(p for p in parts if str(p).strip()).strip()
 
 def ensure_index_from_object_info() -> None:
     cache_dir = Path(__file__).resolve().parent / ollama_config.nodes_cache_directory
@@ -118,6 +149,7 @@ def ensure_index_from_object_info() -> None:
     meta_path = cache_dir / "node_index.meta.json"
     vecs_path = cache_dir / "node_index.vectors.npy"
     weights_path = cache_dir / "node_index.weights.npy"
+    node_object_info_texts_path = cache_dir / "node_index.object_info_texts.json"
     node_weights_path = cache_dir / "node_index.weights.json"
     node_final_texts_path = cache_dir / "node_index.final_texts.json"
 
@@ -165,16 +197,17 @@ def ensure_index_from_object_info() -> None:
     # Build stable list of nodes (merge list from app and from web)
     node_names = sorted(set(object_info.keys()) | set(web_crawler_notes.keys()))
 
+    object_info_text_dict: dict[str, str] = {}
     final_hashes: Dict[str, str] = {}
     new_vecs: List[np.ndarray] = []
     new_weights: List[np.float32] = []
     node_weights: dict[str, float] = {}
-    final_text_dict: dict[str, float] = {}
+    final_text_dict: dict[str, str] = {}
     reused = updated = 0
 
     for n in node_names:
         meta = object_info.get(n, {}) or {}
-        base_text = compact_node_text(n, meta)
+        base_text = object_info_node_text(n, meta)
         user_text = (custom_notes.get(n) or "").strip()
         web_crawler_text = (web_crawler_notes.get(n) or "").strip()
 
@@ -194,6 +227,7 @@ def ensure_index_from_object_info() -> None:
         new_weights.append(w)
         node_weights[str(n)] = float(w)
 
+        object_info_text_dict[str(n)] = str(base_text)
         final_text_dict[str(n)] = str(final_text)
 
         final_hash = _sha256(final_text)
@@ -237,6 +271,7 @@ def ensure_index_from_object_info() -> None:
     # Save index
     _atomic_write_text(nodes_path, json.dumps(node_names, indent=2))
     _atomic_write_text(node_weights_path, json.dumps(node_weights, indent=2, sort_keys=True))
+    _atomic_write_text(node_object_info_texts_path, json.dumps(object_info_text_dict, indent=2, sort_keys=True))
     _atomic_write_text(node_final_texts_path, json.dumps(final_text_dict, indent=2, sort_keys=True))
     _atomic_write_npy(vecs_path, vec_arr)
     _atomic_write_npy(weights_path, weight_arr)
