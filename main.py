@@ -21,7 +21,6 @@ from agent.ollama_bootstrap import OllamaConfig, ensure_ollama
 from agent.ollama_model import pull_models
 from agent.generate_vector_embeddings import ensure_index_from_object_info
 from agent import agent_runtime_info
-from agent.ollama_chat import test_chat
 
 if __name__ == "__main__":
     # NOTE: These do not do anything on core ComfyUI, they are for custom nodes.
@@ -466,7 +465,6 @@ if __name__ == "__main__":
     if agent_runtime_info.is_ollama_enabled:
         chat_model, embed_model = pull_models()
         logging.info(f"Ollama enabled. chat={chat_model} embed={embed_model}")
-        #test_chat()
     else:
         logging.info("Ollama disabled/unavailable; LLM features will be off.")
 

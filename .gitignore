@@ -5,8 +5,11 @@ __pycache__/
 !/input/example.png
 /models/
 /temp/
-/custom_nodes/
+/custom_nodes/*
 !custom_nodes/example_node.py.example
+!custom_nodes/agent_menu_ext/
+!/custom_nodes/agent_menu_ext/**
+/custom_nodes/agent_menu_ext/__pycache__
 extra_model_paths.yaml
 /.vs
 .vscode/
