@@ -2,21 +2,12 @@ import numpy as np
 import json
 from pathlib import Path
 from datetime import datetime
-#from agent import ollama_config
-#from agent import ollama_embedding_util
+
+from agent import ollama_config
+from agent import ollama_embedding_util
 
 import requests
 from typing import List
-
-def _embed(host: str, embed_model: str, text: str) -> List[float]:
-    r = requests.post(
-        f"{host.rstrip('/')}/api/embeddings",
-        json={"model": embed_model, "prompt": text},
-        timeout=120,
-    )
-    if not r.ok:
-        raise RuntimeError(f"Ollama embeddings failed ({r.status_code}): {r.text[:1000]}")
-    return r.json()["embedding"]
 
 def _load_node_index(cache_dir: Path | None = None) -> tuple[list[str], np.ndarray, dict]:
     cache_dir = cache_dir or (Path(__file__).resolve().parent / "node_cache")
@@ -99,28 +90,9 @@ def _topk_cosine(vecs: np.ndarray, q_vec: np.ndarray, top_k: int):
 def query_node_index(query: str, *, top_k: int = 10) -> list[tuple[str, float]]:
     nodes, vecs, snapshot, weights = _load_node_index()
 
-    # Log Stats for Vectors
-    log_text = (
-        f"vecs: shape={vecs.shape}, "
-        f"NaN={np.isnan(vecs).sum()}, "
-        f"Inf={np.isinf(vecs).sum()}, "
-        f"min_norm={np.linalg.norm(np.nan_to_num(vecs), axis=1).min():.4f}"
-    )
-    _log_line(log_text)
-
     # Generate Query Embedding
-    raw_embed = _embed("http://127.0.0.1:11434", "nomic-embed-text", query)
+    raw_embed = ollama_embedding_util._embed(ollama_config.ollama_host, ollama_config.embed_model, query)
     q_vec = np.array(raw_embed, dtype=np.float32)
-
-    # Log Stats for Query Vector (Crucial for debugging invalid value warnings)
-    q_norm = np.linalg.norm(q_vec)
-    log_q_text = (
-        f"query: '{query}' | "
-        f"shape={q_vec.shape}, "
-        f"NaN={np.isnan(q_vec).sum()}, "
-        f"norm={q_norm:.4f}"
-    )
-    _log_line(log_q_text)
 
     # Run Search
     idx, sims = _topk_cosine(vecs, q_vec, top_k)
@@ -153,13 +125,3 @@ def _log_line(line: str, filename: str = "query_results.log") -> None:
     log_path = Path(__file__).resolve().parent / filename
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     log_path.open("a", encoding="utf-8").write(f"[{ts}] {line}\n")
-
-if __name__ == "__main__":
-    # super simple CLI usage:
-    #   python -m your_package.ollama_node_index_from_object_info "edge detection node"
-    import sys
-    q = " ".join(sys.argv[1:]).strip() or "edge detection node"
-    query_node_index(q, top_k=10)
-    # nodes, _, _, _ = _load_node_index()
-    # hits = [n for n in nodes if "edge" in n.lower() or "canny" in n.lower() or "sobel" in n.lower()]
-    # print("edge-like nodes:", hits[:50])
