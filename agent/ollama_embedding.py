@@ -116,7 +116,7 @@ def query_node_index(query: str, *, top_k: int = 10) -> list[tuple[str, float]]:
         if desc:
             extra.append(f"desc={desc[:120]}{'...' if len(desc) > 120 else ''}")
 
-        print(f"{rank:2d}. {node_class}  score={s:0.4f}  display={display}" + (f"  ({', '.join(extra)})" if extra else ""))
+        #print(f"{rank:2d}. {node_class}  score={s:0.4f}  display={display}" + (f"  ({', '.join(extra)})" if extra else ""))
         results.append((node_class, float(s)))
 
     return results
