@@ -1,6 +1,6 @@
 from __future__ import annotations
 from ollama import chat
-from . import ollama_model, ollama_config, ollama_embedding
+from . import ollama_model, ollama_config, ollama_embedding, agent_build_flow
 
 def send_prompt(prompt: str) -> str:
     chat_model, embed_model = ollama_model.pull_models()
@@ -172,7 +172,17 @@ def plan_to_nodes(user_prompt: str, *, top_k: int = 10) -> str:
 
     return " -> ".join(chosen_nodes)
 
+def send_to_build_flow(text: str):
+    agent_dir  = Path(__file__).resolve().parent
+    path = agent_dir  / "node_cache" / "object_info.generated.json"
+    object_info = json.loads(path.read_text(encoding="utf-8"))
+    wf = agent_build_flow.build_comfyui_ui_workflow(text, object_info, schema="1.0")
+    
+    comfy_root = agent_dir.parent
+    agent_build_flow.save_into_comfyui_workflows(wf, comfy_root, "hownowbrowncow_workflow")
 
 def send_prompt(prompt: str) -> str:
     system = "You are a helpful assistant."
-    return plan_to_nodes(prompt)
+    text =  plan_to_nodes(prompt)
+    send_to_build_flow(text)
+    return text

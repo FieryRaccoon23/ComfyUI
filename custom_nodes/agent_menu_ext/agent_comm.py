@@ -3,7 +3,8 @@ from server import PromptServer
 from agent import ollama_chat
 
 def send_prompt(text: str) -> str:
-    return ollama_chat.send_prompt(text)
+    output = ollama_chat.send_prompt(text)
+    return output
 
 @PromptServer.instance.routes.post("/agent_menu_ext/ask")
 async def agent_ask(request: web.Request):
