@@ -1,0 +1,20 @@
+cd custom_nodes
+run git clone https://github.com/kijai/ComfyUI-Hunyuan3DWrapper
+cd  cd ComfyUI-Hunyuan3DWrapper
+pip install -r requirements.txt
+
+Go back to root
+
+cd models
+cd diffusion_models
+mkdir hunyuan3d-dit-v2-1
+mkdir hunyuan3d-paintpbr-v2-1
+mkdir hunyuan3d-vae-v2-1
+mkdir hy3dpaint
+download models for dit: https://huggingface.co/kijai/Hunyuan3D-2.1-ComfyUI
+
+download https://git-lfs.com/
+git lfs install
+git clone https://huggingface.co/tencent/Hunyuan3D-2.1
+
+put in correct folders
