@@ -10,6 +10,10 @@ __pycache__/
 !custom_nodes/agent_menu_ext/
 !/custom_nodes/agent_menu_ext/**
 /custom_nodes/agent_menu_ext/__pycache__
+!custom_nodes/Blender/
+!/custom_nodes/Blender/**
+/custom_nodes/Blender/__pycache__
+/custom_nodes/Blender/BlenderDecimate/__pycache__
 extra_model_paths.yaml
 /.vs
 .vscode/

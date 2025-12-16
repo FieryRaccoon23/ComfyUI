@@ -43837,6 +43837,75 @@
     "experimental": false,
     "api_node": true
   },
+  "Blender_Decimate": {
+    "input": {
+      "required": {
+        "mesh_path": [
+          "STRING",
+          {
+            "default": ""
+          }
+        ],
+        "ratio": [
+          "FLOAT",
+          {
+            "default": 0.5,
+            "min": 0.0,
+            "max": 1.0,
+            "step": 1e-06,
+            "round": false,
+            "display": "number"
+          }
+        ],
+        "output_name": [
+          "STRING",
+          {
+            "default": "decimated.obj"
+          }
+        ],
+        "save_file": [
+          "BOOLEAN",
+          {
+            "default": false
+          }
+        ]
+      },
+      "optional": {
+        "output_dir": [
+          "STRING",
+          {
+            "default": ""
+          }
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "mesh_path",
+        "ratio",
+        "output_name",
+        "save_file"
+      ],
+      "optional": [
+        "output_dir"
+      ]
+    },
+    "output": [
+      "STRING"
+    ],
+    "output_is_list": [
+      false
+    ],
+    "output_name": [
+      "mesh_out_path"
+    ],
+    "name": "Blender_Decimate",
+    "display_name": "Blender Decimate will reduce the polygon or face counts of a mesh",
+    "description": "",
+    "python_module": "custom_nodes.Blender",
+    "category": "3D/Blender",
+    "output_node": false
+  },
   "Hy3DModelLoader": {
     "input": {
       "required": {

@@ -1,10 +1,10 @@
 {
   "embed_model": "nomic-embed-text",
   "ollama_host": "http://127.0.0.1:11434",
-  "count": 616,
+  "count": 617,
   "dim": 768,
-  "updated": 2,
-  "reused": 614,
+  "updated": 1,
+  "reused": 616,
   "final_hashes": {
     "APG": "e58ce9a6eec2272a1739fde75fe4c683753373060a3cf96aa55766fab3ba9c21",
     "AddNoise": "9f607540aa9a054328ffb6ad9a195314626514e68f7a30c3f587aec0d27d9158",
@@ -21,6 +21,7 @@
     "BasicGuider": "85158f35d077f4e4a08163ee092a0d90aace8bf33d4d5bf03baa64883b52b24a",
     "BasicScheduler": "ec963e42b3c8b690eb52e5fcdc805808014ef0bac54a3c0f6f37f059138b94cb",
     "BetaSamplingScheduler": "6629767c87fa31fa2a6872d024eab02876e7642af6bbcc51f2c284c9cab0e120",
+    "Blender_Decimate": "ea7fa8986a8dd4133c2be9f1b4b5fec304ff972363ffc8142c2364915c411fff",
     "ByteDanceFirstLastFrameNode": "dc232b739b8af359962c4e822325af8b2cc276f038ea6e90f664834a34b780a9",
     "ByteDanceImageEditNode": "e7fe92fe594a36ffdee01a74f1af9e731e654be6c4ffedd7bb984e65ac74224f",
     "ByteDanceImageNode": "d43b2129ecd50702f5aa2fadd6350eca6e1433ecbcfac5730cf4f19a25747e78",

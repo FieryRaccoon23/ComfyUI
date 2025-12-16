@@ -14,6 +14,7 @@
   "BasicGuider": 1.0,
   "BasicScheduler": 1.0,
   "BetaSamplingScheduler": 1.0,
+  "Blender_Decimate": 1.0,
   "ByteDanceFirstLastFrameNode": 1.0,
   "ByteDanceImageEditNode": 1.0,
   "ByteDanceImageNode": 1.0,
