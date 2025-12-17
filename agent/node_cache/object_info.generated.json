@@ -24797,7 +24797,9 @@
     "input": {
       "required": {
         "model_file": [
-          [],
+          [
+            "3d/Hy3D_00006_.obj"
+          ],
           {
             "file_upload": true
           }
@@ -43900,11 +43902,931 @@
       "mesh_out_path"
     ],
     "name": "Blender_Decimate",
-    "display_name": "Blender Decimate will reduce the polygon or face counts of a mesh",
+    "display_name": "Blender Decimate",
     "description": "",
     "python_module": "custom_nodes.Blender",
     "category": "3D/Blender",
     "output_node": false
+  },
+  "Blender_Inspect": {
+    "input": {
+      "required": {
+        "model_path": [
+          "STRING",
+          {
+            "default": "",
+            "multiline": false
+          }
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "model_path"
+      ]
+    },
+    "output": [
+      "STRING"
+    ],
+    "output_is_list": [
+      false
+    ],
+    "output_name": [
+      "stats"
+    ],
+    "name": "Blender_Inspect",
+    "display_name": "Blender Inspect Model (verts/faces/edges/tris)",
+    "description": "",
+    "python_module": "custom_nodes.Blender",
+    "category": "Blender",
+    "output_node": false
+  },
+  "LoraLoader|pysssss": {
+    "input": {
+      "required": {
+        "model": [
+          "MODEL",
+          {
+            "tooltip": "The diffusion model the LoRA will be applied to."
+          }
+        ],
+        "clip": [
+          "CLIP",
+          {
+            "tooltip": "The CLIP model the LoRA will be applied to."
+          }
+        ],
+        "lora_name": [
+          [],
+          {
+            "tooltip": "The name of the LoRA."
+          }
+        ],
+        "strength_model": [
+          "FLOAT",
+          {
+            "default": 1.0,
+            "min": -100.0,
+            "max": 100.0,
+            "step": 0.01,
+            "tooltip": "How strongly to modify the diffusion model. This value can be negative."
+          }
+        ],
+        "strength_clip": [
+          "FLOAT",
+          {
+            "default": 1.0,
+            "min": -100.0,
+            "max": 100.0,
+            "step": 0.01,
+            "tooltip": "How strongly to modify the CLIP model. This value can be negative."
+          }
+        ]
+      },
+      "optional": {
+        "prompt": [
+          "STRING",
+          {
+            "hidden": true
+          }
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "model",
+        "clip",
+        "lora_name",
+        "strength_model",
+        "strength_clip"
+      ],
+      "optional": [
+        "prompt"
+      ]
+    },
+    "output": [
+      "MODEL",
+      "CLIP",
+      "STRING"
+    ],
+    "output_is_list": [
+      false,
+      false,
+      false
+    ],
+    "output_name": [
+      "MODEL",
+      "CLIP",
+      "example"
+    ],
+    "name": "LoraLoader|pysssss",
+    "display_name": "Lora Loader \ud83d\udc0d",
+    "description": "LoRAs are used to modify diffusion and CLIP models, altering the way in which latents are denoised such as applying styles. Multiple LoRA nodes can be linked together.",
+    "python_module": "custom_nodes.ComfyUI-Custom-Scripts",
+    "category": "loaders",
+    "output_node": false,
+    "output_tooltips": [
+      "The modified diffusion model.",
+      "The modified CLIP model."
+    ]
+  },
+  "CheckpointLoader|pysssss": {
+    "input": {
+      "required": {
+        "ckpt_name": [
+          [],
+          {
+            "tooltip": "The name of the checkpoint (model) to load."
+          }
+        ]
+      },
+      "optional": {
+        "prompt": [
+          "STRING",
+          {
+            "hidden": true
+          }
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "ckpt_name"
+      ],
+      "optional": [
+        "prompt"
+      ]
+    },
+    "output": [
+      "MODEL",
+      "CLIP",
+      "VAE",
+      "STRING"
+    ],
+    "output_is_list": [
+      false,
+      false,
+      false,
+      false
+    ],
+    "output_name": [
+      "MODEL",
+      "CLIP",
+      "VAE",
+      "example"
+    ],
+    "name": "CheckpointLoader|pysssss",
+    "display_name": "Checkpoint Loader \ud83d\udc0d",
+    "description": "Loads a diffusion model checkpoint, diffusion models are used to denoise latents.",
+    "python_module": "custom_nodes.ComfyUI-Custom-Scripts",
+    "category": "loaders",
+    "output_node": false,
+    "output_tooltips": [
+      "The model used for denoising latents.",
+      "The CLIP model used for encoding text prompts.",
+      "The VAE model used for encoding and decoding images to and from latent space."
+    ]
+  },
+  "ConstrainImage|pysssss": {
+    "input": {
+      "required": {
+        "images": [
+          "IMAGE"
+        ],
+        "max_width": [
+          "INT",
+          {
+            "default": 1024,
+            "min": 0
+          }
+        ],
+        "max_height": [
+          "INT",
+          {
+            "default": 1024,
+            "min": 0
+          }
+        ],
+        "min_width": [
+          "INT",
+          {
+            "default": 0,
+            "min": 0
+          }
+        ],
+        "min_height": [
+          "INT",
+          {
+            "default": 0,
+            "min": 0
+          }
+        ],
+        "crop_if_required": [
+          [
+            "yes",
+            "no"
+          ],
+          {
+            "default": "no"
+          }
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "images",
+        "max_width",
+        "max_height",
+        "min_width",
+        "min_height",
+        "crop_if_required"
+      ]
+    },
+    "output": [
+      "IMAGE"
+    ],
+    "output_is_list": [
+      true
+    ],
+    "output_name": [
+      "IMAGE"
+    ],
+    "name": "ConstrainImage|pysssss",
+    "display_name": "Constrain Image \ud83d\udc0d",
+    "description": "",
+    "python_module": "custom_nodes.ComfyUI-Custom-Scripts",
+    "category": "image",
+    "output_node": false
+  },
+  "ConstrainImageforVideo|pysssss": {
+    "input": {
+      "required": {
+        "images": [
+          "IMAGE"
+        ],
+        "max_width": [
+          "INT",
+          {
+            "default": 1024,
+            "min": 0
+          }
+        ],
+        "max_height": [
+          "INT",
+          {
+            "default": 1024,
+            "min": 0
+          }
+        ],
+        "min_width": [
+          "INT",
+          {
+            "default": 0,
+            "min": 0
+          }
+        ],
+        "min_height": [
+          "INT",
+          {
+            "default": 0,
+            "min": 0
+          }
+        ],
+        "crop_if_required": [
+          [
+            "yes",
+            "no"
+          ],
+          {
+            "default": "no"
+          }
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "images",
+        "max_width",
+        "max_height",
+        "min_width",
+        "min_height",
+        "crop_if_required"
+      ]
+    },
+    "output": [
+      "IMAGE"
+    ],
+    "output_is_list": [
+      false
+    ],
+    "output_name": [
+      "IMAGE"
+    ],
+    "name": "ConstrainImageforVideo|pysssss",
+    "display_name": "Constrain Image for Video \ud83d\udc0d",
+    "description": "",
+    "python_module": "custom_nodes.ComfyUI-Custom-Scripts",
+    "category": "image",
+    "output_node": false
+  },
+  "MathExpression|pysssss": {
+    "input": {
+      "required": {
+        "expression": [
+          "STRING",
+          {
+            "multiline": true,
+            "dynamicPrompts": false,
+            "pysssss.autocomplete": {
+              "words": [
+                {
+                  "text": "round",
+                  "value": "round()",
+                  "showValue": false,
+                  "hint": "number, dp? = 0",
+                  "caretOffset": -1
+                },
+                {
+                  "text": "ceil",
+                  "value": "ceil()",
+                  "showValue": false,
+                  "hint": "number",
+                  "caretOffset": -1
+                },
+                {
+                  "text": "floor",
+                  "value": "floor()",
+                  "showValue": false,
+                  "hint": "number",
+                  "caretOffset": -1
+                },
+                {
+                  "text": "min",
+                  "value": "min()",
+                  "showValue": false,
+                  "hint": "...numbers",
+                  "caretOffset": -1
+                },
+                {
+                  "text": "max",
+                  "value": "max()",
+                  "showValue": false,
+                  "hint": "...numbers",
+                  "caretOffset": -1
+                },
+                {
+                  "text": "randomint",
+                  "value": "randomint()",
+                  "showValue": false,
+                  "hint": "min, max",
+                  "caretOffset": -1
+                },
+                {
+                  "text": "randomchoice",
+                  "value": "randomchoice()",
+                  "showValue": false,
+                  "hint": "...numbers",
+                  "caretOffset": -1
+                },
+                {
+                  "text": "sqrt",
+                  "value": "sqrt()",
+                  "showValue": false,
+                  "hint": "number",
+                  "caretOffset": -1
+                },
+                {
+                  "text": "int",
+                  "value": "int()",
+                  "showValue": false,
+                  "hint": "number",
+                  "caretOffset": -1
+                },
+                {
+                  "text": "iif",
+                  "value": "iif()",
+                  "showValue": false,
+                  "hint": "value, truepart, falsepart",
+                  "caretOffset": -1
+                }
+              ],
+              "separator": ""
+            }
+          }
+        ]
+      },
+      "optional": {
+        "a": [
+          "*"
+        ],
+        "b": [
+          "*"
+        ],
+        "c": [
+          "*"
+        ]
+      },
+      "hidden": {
+        "extra_pnginfo": "EXTRA_PNGINFO",
+        "prompt": "PROMPT"
+      }
+    },
+    "input_order": {
+      "required": [
+        "expression"
+      ],
+      "optional": [
+        "a",
+        "b",
+        "c"
+      ],
+      "hidden": [
+        "extra_pnginfo",
+        "prompt"
+      ]
+    },
+    "output": [
+      "INT",
+      "FLOAT"
+    ],
+    "output_is_list": [
+      false,
+      false
+    ],
+    "output_name": [
+      "INT",
+      "FLOAT"
+    ],
+    "name": "MathExpression|pysssss",
+    "display_name": "Math Expression \ud83d\udc0d",
+    "description": "",
+    "python_module": "custom_nodes.ComfyUI-Custom-Scripts",
+    "category": "utils",
+    "output_node": true
+  },
+  "PlaySound|pysssss": {
+    "input": {
+      "required": {
+        "any": [
+          "*",
+          {}
+        ],
+        "mode": [
+          [
+            "always",
+            "on empty queue"
+          ],
+          {}
+        ],
+        "volume": [
+          "FLOAT",
+          {
+            "min": 0,
+            "max": 1,
+            "step": 0.1,
+            "default": 0.5
+          }
+        ],
+        "file": [
+          "STRING",
+          {
+            "default": "notify.mp3"
+          }
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "any",
+        "mode",
+        "volume",
+        "file"
+      ]
+    },
+    "output": [
+      "*"
+    ],
+    "output_is_list": [
+      true
+    ],
+    "output_name": [
+      "*"
+    ],
+    "name": "PlaySound|pysssss",
+    "display_name": "PlaySound \ud83d\udc0d",
+    "description": "",
+    "python_module": "custom_nodes.ComfyUI-Custom-Scripts",
+    "category": "utils",
+    "output_node": true
+  },
+  "Repeater|pysssss": {
+    "input": {
+      "required": {
+        "source": [
+          "*",
+          {}
+        ],
+        "repeats": [
+          "INT",
+          {
+            "min": 0,
+            "max": 5000,
+            "default": 2
+          }
+        ],
+        "output": [
+          [
+            "single",
+            "multi"
+          ],
+          {}
+        ],
+        "node_mode": [
+          [
+            "reuse",
+            "create"
+          ],
+          {}
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "source",
+        "repeats",
+        "output",
+        "node_mode"
+      ]
+    },
+    "output": [
+      "*"
+    ],
+    "output_is_list": [
+      true
+    ],
+    "output_name": [
+      "*"
+    ],
+    "name": "Repeater|pysssss",
+    "display_name": "Repeater \ud83d\udc0d",
+    "description": "",
+    "python_module": "custom_nodes.ComfyUI-Custom-Scripts",
+    "category": "utils",
+    "output_node": false
+  },
+  "ReroutePrimitive|pysssss": {
+    "input": {
+      "required": {
+        "value": [
+          "*"
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "value"
+      ]
+    },
+    "output": [
+      "*"
+    ],
+    "output_is_list": [
+      false
+    ],
+    "output_name": [
+      "*"
+    ],
+    "name": "ReroutePrimitive|pysssss",
+    "display_name": "Reroute Primitive \ud83d\udc0d",
+    "description": "",
+    "python_module": "custom_nodes.ComfyUI-Custom-Scripts",
+    "category": "__hidden__",
+    "output_node": false
+  },
+  "ShowText|pysssss": {
+    "input": {
+      "required": {
+        "text": [
+          "STRING",
+          {
+            "forceInput": true
+          }
+        ]
+      },
+      "hidden": {
+        "unique_id": "UNIQUE_ID",
+        "extra_pnginfo": "EXTRA_PNGINFO"
+      }
+    },
+    "input_order": {
+      "required": [
+        "text"
+      ],
+      "hidden": [
+        "unique_id",
+        "extra_pnginfo"
+      ]
+    },
+    "output": [
+      "STRING"
+    ],
+    "output_is_list": [
+      true
+    ],
+    "output_name": [
+      "STRING"
+    ],
+    "name": "ShowText|pysssss",
+    "display_name": "Show Text \ud83d\udc0d",
+    "description": "",
+    "python_module": "custom_nodes.ComfyUI-Custom-Scripts",
+    "category": "utils",
+    "output_node": true
+  },
+  "StringFunction|pysssss": {
+    "input": {
+      "required": {
+        "action": [
+          [
+            "append",
+            "replace"
+          ],
+          {}
+        ],
+        "tidy_tags": [
+          [
+            "yes",
+            "no"
+          ],
+          {}
+        ]
+      },
+      "optional": {
+        "text_a": [
+          "STRING",
+          {
+            "multiline": true,
+            "dynamicPrompts": false
+          }
+        ],
+        "text_b": [
+          "STRING",
+          {
+            "multiline": true,
+            "dynamicPrompts": false
+          }
+        ],
+        "text_c": [
+          "STRING",
+          {
+            "multiline": true,
+            "dynamicPrompts": false
+          }
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "action",
+        "tidy_tags"
+      ],
+      "optional": [
+        "text_a",
+        "text_b",
+        "text_c"
+      ]
+    },
+    "output": [
+      "STRING"
+    ],
+    "output_is_list": [
+      false
+    ],
+    "output_name": [
+      "STRING"
+    ],
+    "name": "StringFunction|pysssss",
+    "display_name": "String Function \ud83d\udc0d",
+    "description": "",
+    "python_module": "custom_nodes.ComfyUI-Custom-Scripts",
+    "category": "utils",
+    "output_node": true
+  },
+  "SystemNotification|pysssss": {
+    "input": {
+      "required": {
+        "message": [
+          "STRING",
+          {
+            "default": "Your notification has triggered."
+          }
+        ],
+        "any": [
+          "*",
+          {}
+        ],
+        "mode": [
+          [
+            "always",
+            "on empty queue"
+          ],
+          {}
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "message",
+        "any",
+        "mode"
+      ]
+    },
+    "output": [
+      "*"
+    ],
+    "output_is_list": [
+      true
+    ],
+    "output_name": [
+      "*"
+    ],
+    "name": "SystemNotification|pysssss",
+    "display_name": "SystemNotification \ud83d\udc0d",
+    "description": "",
+    "python_module": "custom_nodes.ComfyUI-Custom-Scripts",
+    "category": "utils",
+    "output_node": true
+  },
+  "LoadText|pysssss": {
+    "input": {
+      "required": {
+        "root_dir": [
+          [
+            "input",
+            "output",
+            "temp"
+          ],
+          {}
+        ],
+        "file": [
+          [
+            "[none]"
+          ],
+          {
+            "pysssss.binding": [
+              {
+                "source": "root_dir",
+                "callback": [
+                  {
+                    "type": "set",
+                    "target": "$this.disabled",
+                    "value": true
+                  },
+                  {
+                    "type": "fetch",
+                    "url": "/pysssss/text-file/{$source.value}",
+                    "then": [
+                      {
+                        "type": "set",
+                        "target": "$this.options.values",
+                        "value": "$result"
+                      },
+                      {
+                        "type": "validate-combo"
+                      },
+                      {
+                        "type": "set",
+                        "target": "$this.disabled",
+                        "value": false
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "root_dir",
+        "file"
+      ]
+    },
+    "output": [
+      "STRING"
+    ],
+    "output_is_list": [
+      false
+    ],
+    "output_name": [
+      "STRING"
+    ],
+    "name": "LoadText|pysssss",
+    "display_name": "Load Text \ud83d\udc0d",
+    "description": "",
+    "python_module": "custom_nodes.ComfyUI-Custom-Scripts",
+    "category": "utils",
+    "output_node": false
+  },
+  "SaveText|pysssss": {
+    "input": {
+      "required": {
+        "root_dir": [
+          [
+            "input",
+            "output",
+            "temp"
+          ],
+          {}
+        ],
+        "file": [
+          "STRING",
+          {
+            "default": "file.txt"
+          }
+        ],
+        "append": [
+          [
+            "append",
+            "overwrite",
+            "new only"
+          ],
+          {}
+        ],
+        "insert": [
+          "BOOLEAN",
+          {
+            "default": true,
+            "label_on": "new line",
+            "label_off": "none",
+            "pysssss.binding": [
+              {
+                "source": "append",
+                "callback": [
+                  {
+                    "type": "if",
+                    "condition": [
+                      {
+                        "left": "$source.value",
+                        "op": "eq",
+                        "right": "\"append\""
+                      }
+                    ],
+                    "true": [
+                      {
+                        "type": "set",
+                        "target": "$this.disabled",
+                        "value": false
+                      }
+                    ],
+                    "false": [
+                      {
+                        "type": "set",
+                        "target": "$this.disabled",
+                        "value": true
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "text": [
+          "STRING",
+          {
+            "forceInput": true,
+            "multiline": true
+          }
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "root_dir",
+        "file",
+        "append",
+        "insert",
+        "text"
+      ]
+    },
+    "output": [
+      "STRING"
+    ],
+    "output_is_list": [
+      false
+    ],
+    "output_name": [
+      "STRING"
+    ],
+    "name": "SaveText|pysssss",
+    "display_name": "Save Text \ud83d\udc0d",
+    "description": "",
+    "python_module": "custom_nodes.ComfyUI-Custom-Scripts",
+    "category": "utils",
+    "output_node": true
   },
   "Hy3DModelLoader": {
     "input": {
