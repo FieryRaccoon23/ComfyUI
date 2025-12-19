@@ -16,6 +16,7 @@
   "BetaSamplingScheduler",
   "Blender_Decimate",
   "Blender_Inspect",
+  "Blender_Smooth",
   "ByteDanceFirstLastFrameNode",
   "ByteDanceImageEditNode",
   "ByteDanceImageNode",

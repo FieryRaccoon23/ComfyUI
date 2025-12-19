@@ -786,6 +786,8 @@
             "box.png",
             "box_mask.png",
             "example.png",
+            "fatcat.png",
+            "fatcat_mask.png",
             "vase.jpg",
             "vase_mask.jpg"
           ],
@@ -827,6 +829,8 @@
             "box.png",
             "box_mask.png",
             "example.png",
+            "fatcat.png",
+            "fatcat_mask.png",
             "vase.jpg",
             "vase_mask.jpg"
           ],
@@ -43939,6 +43943,92 @@
     "description": "",
     "python_module": "custom_nodes.Blender",
     "category": "Blender",
+    "output_node": false
+  },
+  "Blender_Smooth": {
+    "input": {
+      "required": {
+        "mesh_path": [
+          "STRING",
+          {
+            "default": ""
+          }
+        ],
+        "iterations": [
+          "INT",
+          {
+            "default": 10,
+            "min": 0,
+            "max": 200,
+            "step": 1
+          }
+        ],
+        "factor": [
+          "FLOAT",
+          {
+            "default": 0.5,
+            "min": 0.0,
+            "max": 1.0,
+            "step": 1e-06,
+            "round": false,
+            "display": "number"
+          }
+        ],
+        "shade_smooth": [
+          "BOOLEAN",
+          {
+            "default": true
+          }
+        ],
+        "output_name": [
+          "STRING",
+          {
+            "default": "smoothed.obj"
+          }
+        ],
+        "save_file": [
+          "BOOLEAN",
+          {
+            "default": false
+          }
+        ]
+      },
+      "optional": {
+        "output_dir": [
+          "STRING",
+          {
+            "default": ""
+          }
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "mesh_path",
+        "iterations",
+        "factor",
+        "shade_smooth",
+        "output_name",
+        "save_file"
+      ],
+      "optional": [
+        "output_dir"
+      ]
+    },
+    "output": [
+      "STRING"
+    ],
+    "output_is_list": [
+      false
+    ],
+    "output_name": [
+      "mesh_out_path"
+    ],
+    "name": "Blender_Smooth",
+    "display_name": "Blender Smooth (modifier + shade smooth)",
+    "description": "",
+    "python_module": "custom_nodes.Blender",
+    "category": "3D/Blender",
     "output_node": false
   },
   "LoraLoader|pysssss": {

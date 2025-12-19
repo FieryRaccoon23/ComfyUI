@@ -15,6 +15,7 @@ __pycache__/
 /custom_nodes/Blender/__pycache__
 /custom_nodes/Blender/BlenderDecimate/__pycache__
 /custom_nodes/Blender/BlenderInspect/__pycache__
+/custom_nodes/Blender/BlenderSmooth/__pycache__
 extra_model_paths.yaml
 /.vs
 .vscode/
