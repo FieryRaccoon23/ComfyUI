@@ -183,6 +183,9 @@ def send_to_build_flow(text: str):
 
 def send_prompt(prompt: str) -> str:
     system = "You are a helpful assistant."
-    text =  plan_to_nodes(prompt)
+    #text =  plan_to_nodes(prompt)
     #send_to_build_flow(text)
+
+    text = _chat_text(system, prompt)
+
     return text
