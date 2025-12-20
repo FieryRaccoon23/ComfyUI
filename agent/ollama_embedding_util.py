@@ -8,5 +8,5 @@ def _embed(host: str, embed_model: str, text: str) -> List[float]:
         timeout=120,
     )
     if not r.ok:
-        raise RuntimeError(f"Ollama embeddings failed ({r.status_code}): {r.text[:1000]}")
+        raise RuntimeError(f"Ollama embeddings failed ({r.status_code}): {r.text[:1000]} - {host}")
     return r.json()["embedding"]

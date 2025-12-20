@@ -9,9 +9,9 @@ from typing import Any, Dict, List, Tuple
 import numpy as np
 import requests
 
-from . import agent_runtime_info
-from . import ollama_config
-from . import ollama_embedding_util
+import agent_runtime_info
+import ollama_config
+import ollama_embedding_util
 
 def _sha256(s: str) -> str:
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
@@ -29,19 +29,19 @@ def _atomic_write_npy(path: Path, arr: np.ndarray) -> None:
     saved = tmp if tmp.suffix == ".npy" else Path(str(tmp) + ".npy")
     saved.replace(path)
 
-def fetch_object_info_with_retry(url: str, *, attempts: int = 30, delay: float = 0.5, timeout: float = 10.0) -> dict | None:
-    last_err = None
-    for _ in range(attempts):
-        try:
-            r = requests.get(url, timeout=timeout)
-            if r.status_code == 200:
-                return r.json()
-            last_err = RuntimeError(f"HTTP {r.status_code}")
-        except Exception as e:
-            last_err = e
-        time.sleep(delay)
-    print(f"[Embeddings] object_info not ready: {url} ({last_err})")
-    return None
+# def fetch_object_info_with_retry(url: str, *, attempts: int = 30, delay: float = 0.5, timeout: float = 10.0) -> dict | None:
+#     last_err = None
+#     for _ in range(attempts):
+#         try:
+#             r = requests.get(url, timeout=timeout)
+#             if r.status_code == 200:
+#                 return r.json()
+#             last_err = RuntimeError(f"HTTP {r.status_code}")
+#         except Exception as e:
+#             last_err = e
+#         time.sleep(delay)
+#     print(f"[Embeddings] object_info not ready: {url} ({last_err})")
+#     return None
 
 def _parse_param_spec(spec):
     """
@@ -111,29 +111,29 @@ def object_info_node_text(node_class: str, meta: dict) -> str:
         parts.append(desc)
 
     # inputs (required/optional/hidden)
-    inputs = meta.get("input") or {}
-    for section in ("required", "optional", "hidden"):
-        params = inputs.get(section) or {}
-        if not isinstance(params, dict) or not params:
-            continue
-        parts.append(f"\n[{section} inputs]")
-        for pname, pspec in params.items():
-            parts.append(_format_param(pname, pspec))
+    # inputs = meta.get("input") or {}
+    # for section in ("required", "optional", "hidden"):
+    #     params = inputs.get(section) or {}
+    #     if not isinstance(params, dict) or not params:
+    #         continue
+    #     parts.append(f"\n[{section} inputs]")
+    #     for pname, pspec in params.items():
+    #         parts.append(_format_param(pname, pspec))
 
     # outputs
-    out_types = meta.get("output") or []
-    out_names = meta.get("output_name") or []
-    out_tips  = meta.get("output_tooltips") or []
+    # out_types = meta.get("output") or []
+    # out_names = meta.get("output_name") or []
+    # out_tips  = meta.get("output_tooltips") or []
 
-    if out_types:
-        parts.append("\n[outputs]")
-        for i, otype in enumerate(out_types):
-            oname = out_names[i] if i < len(out_names) else None
-            otip  = out_tips[i] if i < len(out_tips) else None
-            line = f"{oname or f'out{i}'}: {otype}"
-            if otip:
-                line += f" | {str(otip).strip()}"
-            parts.append(line)
+    # if out_types:
+    #     parts.append("\n[outputs]")
+    #     for i, otype in enumerate(out_types):
+    #         oname = out_names[i] if i < len(out_names) else None
+    #         otip  = out_tips[i] if i < len(out_tips) else None
+    #         line = f"{oname or f'out{i}'}: {otype}"
+    #         if otip:
+    #             line += f" | {str(otip).strip()}"
+    #         parts.append(line)
 
     return "\n".join(p for p in parts if str(p).strip()).strip()
 
@@ -157,6 +157,11 @@ def ensure_index_from_object_info() -> None:
         custom_notes = json.loads(custom_path.read_text(encoding="utf-8"))
     else:
         custom_notes = {}
+
+    if gen_snapshot.exists():
+        object_info = json.loads(gen_snapshot.read_text(encoding="utf-8"))
+    else:
+        object_info = {}
 
     if web_crawler_path.exists():
         web_crawler_notes = json.loads(web_crawler_path.read_text(encoding="utf-8"))
@@ -188,11 +193,11 @@ def ensure_index_from_object_info() -> None:
             if i < len(old_vecs):
                 old_vec_map[n] = old_vecs[i]
 
-    obj_info_path = "/object_info"
-    comfyUI_host_obj_info = f"{agent_runtime_info.comfy_ui_host}{obj_info_path}"
-    object_info = fetch_object_info_with_retry(comfyUI_host_obj_info)
-    if object_info is None:
-        return
+    # obj_info_path = "/object_info"
+    # comfyUI_host_obj_info = f"{agent_runtime_info.comfy_ui_host}{obj_info_path}"
+    # object_info = fetch_object_info_with_retry(comfyUI_host_obj_info)
+    # if object_info is None:
+    #     return
 
     # Build stable list of nodes (merge list from app and from web)
     node_names = sorted(set(object_info.keys()) | set(web_crawler_notes.keys()))
@@ -266,7 +271,7 @@ def ensure_index_from_object_info() -> None:
             )
 
     # Save generated snapshot (optional but handy for debugging)
-    _atomic_write_text(gen_snapshot, json.dumps(object_info, indent=2))
+    #_atomic_write_text(gen_snapshot, json.dumps(object_info, indent=2))
 
     # Save index
     _atomic_write_text(nodes_path, json.dumps(node_names, indent=2))
@@ -290,3 +295,8 @@ def ensure_index_from_object_info() -> None:
     f"updated={updated} reused={reused} dim={int(vec_arr.shape[1]) if vec_arr.ndim==2 else 0} "
     f"cache_dir={cache_dir}")
     print(f"[Embeddings] Wrote: {gen_snapshot.name}, {nodes_path.name}, {meta_path.name}, {vecs_path.name}")
+
+if __name__ == "__main__":
+    print("Generating vector embeddings ...")
+    ensure_index_from_object_info()
+

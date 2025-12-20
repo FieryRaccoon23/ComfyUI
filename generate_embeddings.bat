@@ -1,0 +1,1 @@
+python -m agent.generate_vector_embeddings
