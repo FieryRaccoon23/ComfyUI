@@ -2,18 +2,18 @@ from __future__ import annotations
 from ollama import chat
 from . import ollama_model, ollama_config, ollama_embedding, agent_build_flow
 
-def send_prompt(prompt: str) -> str:
-    chat_model, embed_model = ollama_model.pull_models()
-    resp = chat(
-        model=chat_model,
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt},
-        ],
-        keep_alive=ollama_config.ollama_keep_alive_time
-    )
+# def send_prompt(prompt: str) -> str:
+#     chat_model, embed_model = ollama_model.pull_models()
+#     resp = chat(
+#         model=chat_model,
+#         messages=[
+#             {"role": "system", "content": "You are a helpful assistant."},
+#             {"role": "user", "content": prompt},
+#         ],
+#         keep_alive=ollama_config.ollama_keep_alive_time
+#     )
 
-    return resp["message"]["content"]# ollama_chat.py
+#     return resp["message"]["content"]# ollama_chat.py
 
 import json
 from pathlib import Path
@@ -184,5 +184,5 @@ def send_to_build_flow(text: str):
 def send_prompt(prompt: str) -> str:
     system = "You are a helpful assistant."
     text =  plan_to_nodes(prompt)
-    send_to_build_flow(text)
+    #send_to_build_flow(text)
     return text

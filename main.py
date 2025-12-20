@@ -489,11 +489,11 @@ def start_comfyui(asyncio_loop=None):
         call_on_start = startup_server
 
     call_on_post_start = None
-    if agent_runtime_info.is_ollama_enabled:
-        def post_startup_server():
-            threading.Thread(target=ensure_index_from_object_info, daemon=True).start()
+    # if agent_runtime_info.is_ollama_enabled:
+    #     def post_startup_server():
+    #         threading.Thread(target=ensure_index_from_object_info, daemon=True).start()
 
-        call_on_post_start = post_startup_server
+    #     call_on_post_start = post_startup_server
 
     async def start_all():
         await prompt_server.setup()
