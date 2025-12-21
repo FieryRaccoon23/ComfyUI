@@ -1,0 +1,9 @@
+{
+  "name": "Debug generate_vector_embeddings (ComfyUI.agent)",
+  "type": "python",
+  "request": "launch",
+  "module": "ComfyUI.agent.generate_vector_embeddings",
+  "cwd": "D:\\ComfyUI",
+  "console": "integratedTerminal",
+  "justMyCode": true
+}

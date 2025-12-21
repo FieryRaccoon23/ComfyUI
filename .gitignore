@@ -18,7 +18,6 @@ __pycache__/
 /custom_nodes/Blender/BlenderSmooth/__pycache__
 extra_model_paths.yaml
 /.vs
-.vscode/
 .idea/
 venv/
 .venv/
