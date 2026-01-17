@@ -522,7 +522,7 @@ if __name__ == "__main__":
 
     # Check for Ollama
     agent_runtime_info.comfy_ui_host = f"http://{args.listen}:{int(args.port)}"
-    agent_runtime_info.is_ollama_enabled = ensure_ollama(OllamaConfig(mode = "auto"))
+    agent_runtime_info.is_ollama_enabled = ensure_ollama(OllamaConfig(mode = "off"))
     if agent_runtime_info.is_ollama_enabled:
         chat_model, embed_model = pull_models()
         logging.info(f"Ollama enabled. chat={chat_model} embed={embed_model}")

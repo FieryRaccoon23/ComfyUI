@@ -8,8 +8,7 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import requests
-
-import agent_runtime_info
+from . import agent_runtime_info
 import ollama_config
 import ollama_embedding_util
 
@@ -221,6 +220,30 @@ def ensure_index_from_object_info() -> None:
             final_text += user_text
         if web_crawler_text:
             final_text += web_crawler_text
+        
+        # Need to add code here
+
+def normalize_embedding_text(text: str) -> str:
+        if not text:
+            return text
+        
+        # Replace new lines with spaces
+        text = text.replace("\n", " ")
+
+        # Remove literal unicode escape like \udXXXX
+        text = re.sub(r"\\ud[0-9a-fA-F]{0,4}", " ", text)
+
+        # Remove actual surrogate characters
+        text = re.sub(r"[\ud800-\udfff]", "", text)
+
+        # Remove https URL links
+        text = re.sub(r"https?://[^\s]+", " ", text)
+
+        # Collapse whitespace
+        text = re.sub(r"\s+", " ", text).strip()
+
+        return text # Nabiha Qamer Code
+
 
         # If no description, keep the weight lower
         decrease_weight = False
