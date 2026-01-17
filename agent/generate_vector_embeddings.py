@@ -8,9 +8,10 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import requests
-from . import agent_runtime_info
+import agent_runtime_info
 import ollama_config
 import ollama_embedding_util
+import re
 
 def _sha256(s: str) -> str:
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
@@ -27,6 +28,24 @@ def _atomic_write_npy(path: Path, arr: np.ndarray) -> None:
     np.save(tmp, arr)
     saved = tmp if tmp.suffix == ".npy" else Path(str(tmp) + ".npy")
     saved.replace(path)
+
+def normalize_embedding_text(text: str) -> str:
+        if not text:
+            return text
+        
+        # Replace new lines with spaces
+        text = text.replace("\n", " ")
+
+        # Remove literal unicode escape like \udXXXX
+        text = text.encode("ascii", "ignore").decode("ascii")
+
+        # Remove https URL links
+        text = re.sub(r"https?://[^\s]+", " ", text)
+
+        # Collapse whitespace
+        text = re.sub(r"\s+", " ", text).strip()
+
+        return text # Nabiha Qamer Code
 
 # def fetch_object_info_with_retry(url: str, *, attempts: int = 30, delay: float = 0.5, timeout: float = 10.0) -> dict | None:
 #     last_err = None
@@ -220,30 +239,9 @@ def ensure_index_from_object_info() -> None:
             final_text += user_text
         if web_crawler_text:
             final_text += web_crawler_text
-        
-        # Need to add code here
 
-def normalize_embedding_text(text: str) -> str:
-        if not text:
-            return text
-        
-        # Replace new lines with spaces
-        text = text.replace("\n", " ")
-
-        # Remove literal unicode escape like \udXXXX
-        text = re.sub(r"\\ud[0-9a-fA-F]{0,4}", " ", text)
-
-        # Remove actual surrogate characters
-        text = re.sub(r"[\ud800-\udfff]", "", text)
-
-        # Remove https URL links
-        text = re.sub(r"https?://[^\s]+", " ", text)
-
-        # Collapse whitespace
-        text = re.sub(r"\s+", " ", text).strip()
-
-        return text # Nabiha Qamer Code
-
+        # Normalize text for emeddings
+        final_text = normalize_embedding_text(final_text)
 
         # If no description, keep the weight lower
         decrease_weight = False
